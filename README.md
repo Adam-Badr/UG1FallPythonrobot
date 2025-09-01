@@ -7,7 +7,7 @@ Robotspeak is a programming language for controlling the actions and movements o
 - **Character set:** ASCII
 - **Whitespace:** The ASCII space, tab or new line characters; separates tokens, otherwise ignored
 - **Comments:** The ASCII at character; start with `@` and continues until the end of the line
-- **Identifiers:** The ASCII letters, digits and the ASCII underscore; must begin with a letter. Identifiers are variables of Boolean type. All variables are implicitly declared on first assignment
+- **Identifiers:** The ASCII letters only. Identifiers are variables of Boolean type. All variables are implicitly declared on first assignment
 
 ## Keywords and Tokens
 
@@ -74,7 +74,7 @@ Programs **MUST** begin with a `LOAD` statement specifying the environment (1, 2
 
 - **`IF…OTHERWISE…END`:** Executes the first block if the condition is true, otherwise executes the `OTHERWISE` block if present
 - **`WHILE…END`:** Executes the code block if the condition is true, and perpetually does so until the condition is false after the end of an executed cycle
-- **Operator precedence:** `AND` binds tighter than `OR`. Both operators are left-associative. Parenthesis override precedence
+- **Operator precedence:** `AND` binds tighter than `OR`. Both operators are left-associative.
 
 ## Error Model
 
