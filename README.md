@@ -1,4 +1,4 @@
-# Robotspeak
+# Robotspeak: Language specification (Part A)
 
 Robotspeak is a programming language for controlling the actions and movements of a small robot, `Runner`, within a virtual 2D environment. The language defines only a small set of instructions and sensors, reflecting deliberate constraints intending to showcase programming design under limitations.
 
@@ -84,7 +84,7 @@ Detected during parsing. A statement with a syntax error **MUST NOT** be execute
 
 A syntax error produces a diagnostic message of the form:
 ```
-SyntaxError: <description> at line <n>
+What ARE YOU DOING?!?!?!? SyntaxError: <description> at line <n> !!!!!
 ```
 
 ### Runtime errors
@@ -93,5 +93,5 @@ Detected during runtime. Examples: referencing a variable before it is assigned.
 
 A runtime error produces a diagnostic message of the form:
 ```
-RuntimeError: <description> at line <n>
+YOOOOOOOO!!!!! What are you doing at line <n> with this RuntimeError!!!?!?!?! <description>
 ```
