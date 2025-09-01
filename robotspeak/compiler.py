@@ -1,3 +1,18 @@
+#collection of variables
+global seenload
+seenload = False
+global worldArray
+
+
+
+
+
+
+validload = {"1", "2", "3"}
+
+
+
+
 class SyntaxErrorException(Exception):
     def __init__(self, description, lineNumber):
         self.description = description
@@ -21,14 +36,44 @@ vocabulary = {
 
 def compiler(codeList): #Each element of the list is a line of code
     lineNumber =0
-    for line in codeList: #For every line, line-by-line
+    while lineNumber<len(codeList): #For every line, line-by-line
+        line = codeList[lineNumber]
         lineNumber += 1
         line = removecomments(line).strip()#remove all comments from the line to ignore and protect against cases where line = "      @comment"
         tokens = tokeniser(line, lineNumber)
         ##################################################################################
         #parser time
-        
 
+
+
+
+def parser(tokens, lineNumber):
+    #case it is the first line
+    if lineNumber ==1 and tokens[0] != "LOAD":
+        raise SyntaxErrorException("LOAD is not the first token.", lineNumber)
+    if lineNumber ==1 and len(tokens) == 1:
+        raise RuntimeErrorException("You have to specify which program to run", lineNumber)
+    if lineNumber ==1 and tokens[0] == "LOAD" and tokens[1] not in validload:
+        raise RuntimeErrorException("You've gotta load either program 1, 2 or 3", lineNumber)
+    if lineNumber ==1 and tokens[0] == "LOAD" and tokens[1] in validload and len(tokens) == 2:
+        #valid load has taken place
+        match tokens[1]:
+            case "1":
+                program1()
+            case "2":
+                program2()
+            case "3":
+                program3()
+        seenload = True
+        return
+    if seenload and "LOAD" in tokens:
+        #LOAD has appeared a second time
+        raise SyntaxErrorException("LOAD can only be present once", lineNumber)
+    
+
+
+    
+    
 
 
 
@@ -64,9 +109,12 @@ def tokeniser(line, lineNumber):
     return line
 
 
-
-
-
+def program1():
+    return
+def program2():
+    return
+def program3():
+    return
 
     
     
