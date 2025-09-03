@@ -1,4 +1,5 @@
 from typing import Tuple
+from itertools import combinations
 
 KEY_SYMBOL = "K"
 DOOR_SYMBOL = "D"
@@ -8,6 +9,10 @@ EMPTY_SYMBOL = "."
 ROBOT_SYMBOL = "R"
 
 class MazeValidationError(Exception):
+    """Custom exception for maze validation errors"""
+    pass
+
+class MazeActionError(Exception):
     """Custom exception for maze validation errors"""
     pass
 
@@ -61,14 +66,15 @@ class Maze:
         self._all_direction_coordinates = [[0, -1], [-1, 0], [0, 1], [1, 0]]
 
         self.has_key = False
+        self.has_opened_door = False
     
     # getters
     def get_width(self) -> int:
-        """Return the maze width (number of navigable columns)."""
+        """Return the maze width."""
         return self.width
 
     def get_length(self) -> int:
-        """Return the maze length (number of navigable rows)."""
+        """Return the maze length."""
         return self.length
 
     def get_key_location(self) -> Tuple[int, int]:
@@ -119,6 +125,30 @@ class Maze:
         self.robot_direction_coordinate = self._all_direction_coordinates[direction_idx]
 
     # validators
+    def _validate_unique_symbols(self) -> None:
+        """
+        Validate that all object symbols are unique.
+        
+        Raises:
+            MazeValidationError: If any two objects share the same location
+        """
+        symbols = [
+            ["key", self.key_symbol],
+            ["door", self.door_symbol],
+            ["exit", self.exit_symbol],
+            ["wall", self.wall_symbol],
+            ["robot", self.robot_symbol],
+            ["empty space", self.empty_symbol]
+        ]
+
+        combos = list(combinations(symbols, 2))
+
+        for combo in combos:
+            symbol1, symbol2 = combo
+            # print(combo)
+            if symbol1[1] == symbol2[1]:
+                raise MazeValidationError(f"You are using the same symbol ({symbol1[1]}) for both {symbol1[0].upper()} and {symbol2[0].upper()}.")
+            
     def _validate_dimensions(self, width: int, length: int) -> None:
         """Validate maze dimensions"""
         if not isinstance(width, int) or not isinstance(length, int):
@@ -157,6 +187,8 @@ class Maze:
         Raises:
             MazeValidationError: If any parameter is invalid
         """
+        self._validate_unique_symbols()
+
         self._validate_dimensions(self.width, self.length)
 
         self._validate_location(self.key_location, "key")
@@ -242,8 +274,7 @@ class Maze:
         and map matrix accordingly.
         """
         if not self.is_front_clear():
-            print(f"Front is not clear, not moving forward")
-            return 
+            raise MazeActionError("Front is not clear, not moving forward")
         
         # removing previous robot
         robot_place = self.map_matrix[self.robot_location[1]][self.robot_location[0]]
@@ -279,20 +310,50 @@ class Maze:
         Sets has_key to True if successful. Does nothing if not on key.
         """
         if not self.on_key():
-            print("Not on the key, not picking up")
-            return 
+            raise MazeActionError("Not on the key, not picking up")
         
         self.has_key = True
+    
+    def open_door(self) -> None:
+        """
+        Open the key if the robot is at the door location and has a key.
+        
+        Sets has_opened_door to True if successful. Does nothing otherwise.
+        """
+        if not self.at_door():
+            raise MazeActionError("Not on the door, not opening")
+        
+        if not self.has_key:
+            raise MazeActionError("No key found, not opening")
+        
+        self.has_opened_door = True
 
     # utilities
-    def print_map_matrix(self, delimeter: str = ' ') -> None:
+    def print_map(self, delimiter: str = ' ') -> None:
         """
         Print the current map matrix to console.
         
         Args:
             delimiter: Character to separate matrix elements (default: space)
         """
-        print('\n'.join([delimeter.join(map_row) for map_row in self.get_map_matrix()]))
+        display_matrix = [row[:] for row in self.map_matrix]
+    
+        # Replace robot symbol with direction arrow
+        robot_x, robot_y = self.robot_location
+        current_cell = display_matrix[robot_y][robot_x]
+        
+        # Get direction arrow
+        direction_idx = self._all_directions.index(self.robot_direction)
+        direction_arrow = self._all_direction_str[direction_idx]
+        
+        # Replace robot symbol with direction arrow
+        if current_cell == self.robot_symbol:
+            display_matrix[robot_y][robot_x] = direction_arrow
+        else:
+            # If robot is on another object, replace R with arrow
+            display_matrix[robot_y][robot_x] = current_cell.replace(self.robot_symbol, direction_arrow)
+        
+        print('\n'.join([delimiter.join(map_row) for map_row in display_matrix]))
 
     def is_maze_solved(self) -> bool:
         """
@@ -301,24 +362,38 @@ class Maze:
         Returns:
             True if robot is at exit, or at door with key collected
         """
-        if self.at_exit() or (self.has_key and self.at_door()):
+        if self.at_exit() or self.has_opened_door:
             return True
         
         return False
 
 if __name__ == "__main__":
     print("Creating initial map with 6x5 maze")
-    maze = Maze(6, 5, [4, 4], [6, 5], [4, 1], [2, 2])
+    maze = Maze(width = 6, 
+                length = 5, 
+                key_location = [4, 4], 
+                door_location = [6, 5], 
+                exit_location = [4, 1], 
+                robot_location = [2, 2])
     maze.create_initial_map()
-    maze.print_map_matrix()
+    maze.print_map()
 
     print()
-    print("Moving forward: ")
+    print("Moving forward:")
     maze.move_forward()
-    maze.print_map_matrix()
+    maze.print_map()
 
     print()
-    print("Turning left and moving forward:")
+    print("Turning left:")
     maze.turn_left()
+    maze.print_map()
+
+    print()
+    print("Moving forward:")
     maze.move_forward()
-    maze.print_map_matrix()
+    maze.print_map()
+
+    print()
+    print("Moving forward:")
+    maze.move_forward()
+    maze.print_map()
