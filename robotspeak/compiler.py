@@ -1,18 +1,16 @@
-from maze import Maze, MazeActionError, MazeValidationError
+from robotspeak.maze import Maze, MazeActionError, MazeValidationError
 
-#collection of variables
+# collection of variables
 global lineNumber
 variabledict = {}
+VOCABULARY = {
+    "LOAD", "IF", "OTHERWISE", "WHILE", "END", "AND", "OR", "TRUE", "FALSE", 
+    "MOVE_FORWARD", "TURN_LEFT", "TURN_RIGHT", "PICK_KEY", "OPEN_DOOR",
+    "FRONT_IS_CLEAR", "ON_KEY", "AT_DOOR", "AT_EXIT", "1", "2", "3", ":="
+}
+VALID_LOADING_ENVS = {"1", "2", "3"}
 
-
-
-
-
-validload = {"1", "2", "3"}
-
-
-
-
+# exceptions
 class SyntaxErrorException(Exception):
     def __init__(self, description, lineNumber):
         self.description = description
@@ -25,39 +23,69 @@ class RuntimeErrorException(Exception):
         self.lineNumber = lineNumber
         super().__init__(f"YOOOOOOOO!!!!! What are you doing at line {lineNumber} with this RuntimeError!!!?!?!?! {description}")
 
-def removecomments(line):
-    return line.split("@", 1)[0]
+# utilities
+def remove_comments(line: str) -> str:
+    if not isinstance(line, str):
+        return ''
+    return line.split("@", 1)[0].strip()
 
-vocabulary = {
-    "LOAD", "IF", "OTHERWISE", "WHILE", "END", "AND", "OR", "TRUE", "FALSE", 
-    "MOVE_FORWARD", "TURN_LEFT", "TURN_RIGHT", "PICK_KEY", "OPEN_DOOR",
-    "FRONT_IS_CLEAR", "ON_KEY", "AT_DOOR", "AT_EXIT", "1", "2", "3", ":=" #the numbers and := do not count to vocabulary cap of 20
-}
+# loading different environments
+def load_program1():
+    global maze
+    print("--- Loading Program 1: Twisting Corridor ---")
+    maze = Maze(width = 6, 
+                length = 1, 
+                key_location = [1, 1], 
+                door_location = [6, 1], 
+                exit_location = [4, 1], 
+                robot_location = [2, 1],
+                robot_direction = 'south')
+    try:
+        maze.create_initial_map()
 
-def compiler(codeList): #Each element of the list is a line of code
+    except MazeValidationError as e:
+        print(f"Warning at line 1: {e}")
 
+    print("Initial Maze State:")
+    maze.print_map()
 
-    lineNumber =0
-    numLines = len(codeList)
+def load_program2():
+    global maze
+    print("--- Loading Program 2: Orthogonal Corridor ---")
+    maze = Maze(width = 6, 
+                length = 5, 
+                key_location = [4, 4], 
+                door_location = [6, 5], 
+                exit_location = [4, 1], 
+                robot_location = [2, 2])
+    try:
+        maze.create_initial_map()
 
+    except MazeValidationError as e:
+        print(f"Warning at line 1: {e}")
+        
+    print("Initial Maze State:")
+    maze.print_map()
 
+def load_program3():
+    return
 
-    while lineNumber<len(codeList): #For every line, line-by-line
-        line = codeList[lineNumber]
-        lineNumber += 1
-        line = removecomments(line).strip()#remove all comments from the line to ignore and protect against cases where line = "      @comment"
-        tokens = tokeniser(line, lineNumber)
-        if not tokens:
+# tokeniser
+def tokeniser(line, lineNumber):
+    if not line:
+        return []
+    line = line.split() #should be no whitespace anymore
+
+    for token in line:
+        if ":=" in token and token != ":=":
+            raise SyntaxErrorException("Why are you slacking on separating := with spaces?????", lineNumber)
+        if token in VOCABULARY:
             continue
-        ##################################################################################
-        #parser time
-        res = parser(tokens, lineNumber, numLines, codeList)
-        if res == "HALT":
-            break
-        if isinstance(res, int): #if returned a number to jump to
-            lineNumber = res - 1
+        if token.isalpha():
             continue
+        raise SyntaxErrorException("You are using invalid tokens", lineNumber)
 
+    return line
 
 
 def parser(tokens, lineNumber, numLines, codingList):
@@ -67,16 +95,16 @@ def parser(tokens, lineNumber, numLines, codingList):
             raise SyntaxErrorException("LOAD is not the first token.", lineNumber)
         if len(tokens) == 1:
             raise RuntimeErrorException("You have to specify which program to run", lineNumber)
-        if tokens[1] not in validload or len(tokens) != 2:
+        if tokens[1] not in VALID_LOADING_ENVS or len(tokens) != 2:
             raise RuntimeErrorException("You've gotta load either program 1, 2 or 3", lineNumber)
 
         match tokens[1]:
             case "1":
-                program1()
+                load_program1()
             case "2":
-                program2()
+                load_program2()
             case "3":
-                program3()
+                load_program3()
         return
         
     if lineNumber ==numLines: #final line
@@ -127,7 +155,7 @@ def parser(tokens, lineNumber, numLines, codingList):
             end_line = lineNumber + 1
             while end_line <= numLines:
                 raw = codingList[end_line - 1]
-                line = removecomments(raw).strip()
+                line = remove_comments(raw)
                 tks = tokeniser(line, end_line)
                 if not tks:
                     end_line += 1
@@ -157,7 +185,7 @@ def parser(tokens, lineNumber, numLines, codingList):
             j = start
             while j < stop:
                 raw = codingList[j - 1]
-                line = removecomments(raw).strip()
+                line = remove_comments(raw)
                 tks = tokeniser(line, j)
                 if not tks:
                     j += 1
@@ -181,7 +209,7 @@ def parser(tokens, lineNumber, numLines, codingList):
             end_line = lineNumber + 1
             while end_line <= numLines:
                 raw = codingList[end_line - 1]
-                line = removecomments(raw).strip()
+                line = remove_comments(raw)
                 tks = tokeniser(line, end_line)
                 if tks and tks[0] == "END":
                     break
@@ -194,7 +222,7 @@ def parser(tokens, lineNumber, numLines, codingList):
                 j = lineNumber + 1
                 while j < end_line:
                     raw = codingList[j - 1]
-                    line = removecomments(raw).strip()
+                    line = remove_comments(raw)
                     tks = tokeniser(line, j)
                     if not tks:
                         j += 1
@@ -244,83 +272,6 @@ def boolConversions(name, lineNumber):
                 return variabledict[name]
             raise SyntaxErrorException("assigning something undeclared", lineNumber)
 
-    
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-def tokeniser(line, lineNumber):
-   
-    if not line:
-        return []
-    line = line.split() #should be no whitespace anymore
-
-    for token in line:
-        if ":=" in token and token != ":=":
-            raise SyntaxErrorException("Why are you slacking on separating := with spaces?????", lineNumber)
-        if token in vocabulary:
-            continue
-        if token.isalpha():
-            continue
-        raise SyntaxErrorException("You are using invalid tokens", lineNumber)
-
-    return line
-
-def program1():
-    global maze
-    print("--- Loading Program 1: Twisting Corridor ---")
-    maze = Maze(width = 6, 
-                length = 1, 
-                key_location = [1, 1], 
-                door_location = [6, 1], 
-                exit_location = [4, 1], 
-                robot_location = [2, 1],
-                robot_direction = 'south')
-    try:
-        maze.create_initial_map()
-
-    except MazeValidationError as e:
-        print(f"Warning at line 1: {e}")
-
-    print("Initial Maze State:")
-    maze.print_map()
-
-def program2():
-    global maze
-    print("--- Loading Program 2: Orthogonal Corridor ---")
-    maze = Maze(width = 6, 
-                length = 5, 
-                key_location = [4, 4], 
-                door_location = [6, 5], 
-                exit_location = [4, 1], 
-                robot_location = [2, 2])
-    try:
-        maze.create_initial_map()
-
-    except MazeValidationError as e:
-        print(f"Warning at line 1: {e}")
-        
-    print("Initial Maze State:")
-    maze.print_map()
-
-def program3():
-    return
-
-    
-
 def eval_bool_expr(tokens, lineNumber):
     n = len(tokens)
     i = 0 
@@ -344,6 +295,7 @@ def eval_bool_expr(tokens, lineNumber):
             right = readTerm()
             left = left and right
         return left
+    
     def parse_or():
         nonlocal i
         left = parse_and() 
@@ -352,8 +304,50 @@ def eval_bool_expr(tokens, lineNumber):
             right = parse_and()
             left = left or right
         return left
+    
     result = parse_or()
     if i != n:
         raise SyntaxErrorException("Unexpected tokens at end of boolean expression", lineNumber)
     return result
 
+# compiler
+def compiler(robotspeak_program):
+    # breaking the program into lines and removing lines
+    code_lines = robotspeak_program.strip().split('\n')
+    code_lines = [remove_comments(code_line) for code_line in code_lines]
+    code_lines = [code_line for code_line in code_lines if len(code_line) > 0]
+
+    lineNumber = 0
+    numLines = len(code_lines)
+
+    while lineNumber < len(code_lines):
+        line = code_lines[lineNumber]
+        lineNumber += 1
+        tokens = tokeniser(line, lineNumber)
+        if not tokens:
+            continue
+
+        #parsing
+        result = parser(tokens, lineNumber, numLines, code_lines)
+        if result == "HALT":
+            break
+
+        #if returned a number to jump to
+        if isinstance(result, int):
+            lineNumber = result - 1
+            continue
+    
+if __name__ == "__main__":
+    robotspak_program = """
+    @loading the map
+    LOAD 1
+    TURN_RIGHT
+    MOVE_FORWARD
+    END
+    """
+    print("Starting RobotSpeak Interpreter...")
+    try:
+        compiler(robotspak_program)
+        print("\nProgram finished.")
+    except (SyntaxErrorException, RuntimeErrorException) as e:
+        print(f"\n--- ERROR ---\n{e}")

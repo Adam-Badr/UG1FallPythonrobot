@@ -6,12 +6,12 @@ build-backend = "hatchling.build"
 name = "robotspeak"
 version = "0.0.1"
 authors = [
-    { name="Adam Badr", email="" },
+    { name="Adam Badr", email="Adambadr27@hotmail.com" },
     { name="Abror Shopulatov", email="murodbeck@proton.me" },
     { name="Yelarys Yertaiuly", email="" },
 ]
 maintainers = [
-    { name="Adam Badr", email="" },
+    { name="Adam Badr", email="Adambadr27@hotmail.com" },
     { name="Abror Shopulatov", email="murodbeck@proton.me" },
     { name="Yelarys Yertaiuly", email="" },
 ]
@@ -33,3 +33,6 @@ classifiers = [
 "Homepage" = "https://github.com/Adam-Badr/UG1FallPythonrobot"
 "Bug Tracker" = "https://github.com/Adam-Badr/UG1FallPythonrobot/issues"
 "Repository" = "https://github.com/Adam-Badr/UG1FallPythonrobot"
+
+[project.scripts]
+robotspeak = "robotspeak.main:main"
