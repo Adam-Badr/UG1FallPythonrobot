@@ -2,6 +2,7 @@ from robotspeak.maze import Maze, MazeActionError, MazeValidationError
 
 # collection of variables
 global lineNumber
+maze = None
 variabledict = {}
 VOCABULARY = {
     "LOAD", "IF", "OTHERWISE", "WHILE", "END", "AND", "OR", "TRUE", "FALSE", 
@@ -9,6 +10,13 @@ VOCABULARY = {
     "FRONT_IS_CLEAR", "ON_KEY", "AT_DOOR", "AT_EXIT", "1", "2", "3", ":="
 }
 VALID_LOADING_ENVS = {"1", "2", "3"}
+
+
+
+
+
+
+
 
 # exceptions
 class SyntaxErrorException(Exception):
@@ -28,6 +36,10 @@ def remove_comments(line: str) -> str:
     if not isinstance(line, str):
         return ''
     return line.split("@", 1)[0].strip()
+
+
+def is_ascii_letters(s: str) -> bool:
+    return s.isascii() and s.isalpha()
 
 # loading different environments
 def load_program1():
@@ -81,7 +93,7 @@ def tokeniser(line, lineNumber):
             raise SyntaxErrorException("Why are you slacking on separating := with spaces?????", lineNumber)
         if token in VOCABULARY:
             continue
-        if token.isalpha():
+        if is_ascii_letters(token):
             continue
         raise SyntaxErrorException("You are using invalid tokens", lineNumber)
 
@@ -144,103 +156,114 @@ def parser(tokens, lineNumber, numLines, codingList):
                 print("\nAction: OPEN_DOOR")
                 if maze.is_maze_solved():
                     print("\n*** MAZE SOLVED! ***")
+                    return "HALT"
             except MazeActionError as e:
                 print(f"Warning at line {lineNumber}: {e}")
         case "IF":
-            # condition is everything after IF
             cond_tokens = tokens[1:]
 
-            # find matching END (single-level) and optional OTHERWISE
             else_line = None
             end_line = lineNumber + 1
+            depth = 0
+
             while end_line <= numLines:
                 raw = codingList[end_line - 1]
-                line = remove_comments(raw)
-                tks = tokeniser(line, end_line)
+                ln = remove_comments(raw)
+                tks = tokeniser(ln, end_line)
                 if not tks:
                     end_line += 1
                     continue
-                if tks[0] == "OTHERWISE" and else_line is None:
+                hd = tks[0]
+                if hd in ("IF", "WHILE"):
+                    depth += 1
+                elif hd == "END":
+                    if depth == 0:
+                        break
+                    depth -= 1
+                elif hd == "OTHERWISE" and depth == 0:
+                    if len(tks) != 1:
+                        raise SyntaxErrorException("OTHERWISE must be the only token on its line", end_line)
                     else_line = end_line
-                    end_line += 1
-                    continue
-                if tks[0] == "END":
-                    break
                 end_line += 1
             else:
                 raise SyntaxErrorException("Missing END for IF/OTHERWISE", lineNumber)
 
-            # decide which block to run
             if eval_bool_expr(cond_tokens, lineNumber):
-                start = lineNumber + 1
-                stop = else_line if else_line else end_line
+                start, stop = lineNumber + 1, (else_line if else_line else end_line)
             elif else_line:
-                start = else_line + 1
-                stop = end_line
+                start, stop = else_line + 1, end_line
             else:
-                start = end_line
-                stop = end_line
+                start = stop = end_line  # skip
 
-            # run the chosen block
             j = start
             while j < stop:
                 raw = codingList[j - 1]
-                line = remove_comments(raw)
-                tks = tokeniser(line, j)
+                ln = remove_comments(raw)
+                tks = tokeniser(ln, j)
                 if not tks:
                     j += 1
                     continue
                 res = parser(tks, j, numLines, codingList)
+                if res == "HALT":
+                    return "HALT"
                 if isinstance(res, int):
                     j = res
                 else:
                     j += 1
 
-            # continue after END
             return end_line + 1
             
 
 
         case "WHILE":
-            # evaluate condition as a list of tokens (AND binds tighter than OR)
             cond_tokens = tokens[1:]
 
-            # find the matching END for this WHILE (single-level)
             end_line = lineNumber + 1
+            depth = 0
             while end_line <= numLines:
                 raw = codingList[end_line - 1]
-                line = remove_comments(raw)
-                tks = tokeniser(line, end_line)
-                if tks and tks[0] == "END":
-                    break
+                ln = remove_comments(raw)
+                tks = tokeniser(ln, end_line)
+                if not tks:
+                    end_line += 1
+                    continue
+                hd = tks[0]
+                if hd in ("IF", "WHILE"):
+                    depth += 1
+                elif hd == "END":
+                    if depth == 0:
+                        break
+                    depth -= 1
                 end_line += 1
             else:
                 raise SyntaxErrorException("Missing END for WHILE", lineNumber)
 
-            # execute the body while condition holds
             while eval_bool_expr(cond_tokens, lineNumber):
                 j = lineNumber + 1
                 while j < end_line:
                     raw = codingList[j - 1]
-                    line = remove_comments(raw)
-                    tks = tokeniser(line, j)
+                    ln = remove_comments(raw)
+                    tks = tokeniser(ln, j)
                     if not tks:
                         j += 1
                         continue
                     res = parser(tks, j, numLines, codingList)
+                    if res == "HALT":
+                        return "HALT"
                     if isinstance(res, int):
                         j = res
                     else:
                         j += 1
 
-            # continue after matching END
             return end_line + 1
                 
         case _:
-            if head[0].isalpha():
+            if is_ascii_letters(head):
                 #Process for assigning a variable
-                if len(tokens) ==3 and tokens[1] == ":=":
-                    variabledict[tokens[0]] = boolConversions(tokens[2], lineNumber)
+                if len(tokens) >=3 and tokens[1] == ":=":
+                    value = eval_bool_expr(tokens[2:], lineNumber)
+                    variabledict[tokens[0]] = value
+                    return
                 else:
                     raise SyntaxErrorException("Invalid assignment line", lineNumber)
             else:
@@ -270,7 +293,7 @@ def boolConversions(name, lineNumber):
         case _:
             if name in variabledict:
                 return variabledict[name]
-            raise SyntaxErrorException("assigning something undeclared", lineNumber)
+            raise RuntimeErrorException("assigning something undeclared", lineNumber)
 
 def eval_bool_expr(tokens, lineNumber):
     n = len(tokens)
@@ -338,7 +361,7 @@ def compiler(robotspeak_program):
             continue
     
 if __name__ == "__main__":
-    robotspak_program = """
+    robotspeak_program = """
     @loading the map
     LOAD 1
     TURN_RIGHT
@@ -347,7 +370,7 @@ if __name__ == "__main__":
     """
     print("Starting RobotSpeak Interpreter...")
     try:
-        compiler(robotspak_program)
+        compiler(robotspeak_program)
         print("\nProgram finished.")
     except (SyntaxErrorException, RuntimeErrorException) as e:
         print(f"\n--- ERROR ---\n{e}")
