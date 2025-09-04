@@ -1,5 +1,5 @@
 @ Load the twisting corridor environment
-LOAD 2
+LOAD 1
 
 @ Main loop to keep the robot moving
 WHILE TRUE
@@ -27,4 +27,6 @@ WHILE TRUE
             TURN_RIGHT
         END
     END
+END
+
 END
