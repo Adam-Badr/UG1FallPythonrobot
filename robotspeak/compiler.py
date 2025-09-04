@@ -1,8 +1,7 @@
+from maze import *
 #collection of variables
-global seenload
-seenload = False
-global worldArray
-
+global lineNumber
+variabledict = {}
 
 
 
@@ -35,28 +34,41 @@ vocabulary = {
 }
 
 def compiler(codeList): #Each element of the list is a line of code
+
+
     lineNumber =0
+    numLines = len(codeList)
+
+
+
     while lineNumber<len(codeList): #For every line, line-by-line
         line = codeList[lineNumber]
         lineNumber += 1
         line = removecomments(line).strip()#remove all comments from the line to ignore and protect against cases where line = "      @comment"
         tokens = tokeniser(line, lineNumber)
+        if not tokens:
+            continue
         ##################################################################################
         #parser time
+        res = parser(tokens, lineNumber, numLines, codeList)
+        if res == "HALT":
+            break
+        if isinstance(res, int): #if returned a number to jump to
+            lineNumber = res - 1
+            continue
 
 
 
-
-def parser(tokens, lineNumber):
+def parser(tokens, lineNumber, numLines, codingList):
     #case it is the first line
-    if lineNumber ==1 and tokens[0] != "LOAD":
-        raise SyntaxErrorException("LOAD is not the first token.", lineNumber)
-    if lineNumber ==1 and len(tokens) == 1:
-        raise RuntimeErrorException("You have to specify which program to run", lineNumber)
-    if lineNumber ==1 and tokens[0] == "LOAD" and tokens[1] not in validload:
-        raise RuntimeErrorException("You've gotta load either program 1, 2 or 3", lineNumber)
-    if lineNumber ==1 and tokens[0] == "LOAD" and tokens[1] in validload and len(tokens) == 2:
-        #valid load has taken place
+    if lineNumber ==1:
+        if tokens[0] != "LOAD":
+            raise SyntaxErrorException("LOAD is not the first token.", lineNumber)
+        if len(tokens) == 1:
+            raise RuntimeErrorException("You have to specify which program to run", lineNumber)
+        if tokens[1] not in validload or len(tokens) != 2:
+            raise RuntimeErrorException("You've gotta load either program 1, 2 or 3", lineNumber)
+
         match tokens[1]:
             case "1":
                 program1()
@@ -64,15 +76,146 @@ def parser(tokens, lineNumber):
                 program2()
             case "3":
                 program3()
-        seenload = True
         return
-    if seenload and "LOAD" in tokens:
-        #LOAD has appeared a second time
-        raise SyntaxErrorException("LOAD can only be present once", lineNumber)
-    
+        
+    if lineNumber ==numLines: #final line
+        if len(tokens) == 1 and tokens[0] == "END":
+                return "HALT" #end the program
+        else:
+            raise SyntaxErrorException("END is not the only token on the last line", lineNumber)
+    #normal lines
+    head = tokens[0]
+    match head:
+        case "LOAD":
+            raise SyntaxErrorException("Cannot have more than 1 LOAD", lineNumber)
+        case "MOVE_FORWARD":
+            lineNumber
+        case "TURN_LEFT":
+            lineNumber
+        case "TURN_RIGHT":
+            lineNumber
+        case "PICK_KEY":
+            lineNumber
+        case "OPEN_DOOR":
+            lineNumber
+        case "IF":
+            # condition is everything after IF
+            cond_tokens = tokens[1:]
+
+            # find matching END (single-level) and optional OTHERWISE
+            else_line = None
+            end_line = lineNumber + 1
+            while end_line <= numLines:
+                raw = codingList[end_line - 1]
+                line = removecomments(raw).strip()
+                tks = tokeniser(line, end_line)
+                if not tks:
+                    end_line += 1
+                    continue
+                if tks[0] == "OTHERWISE" and else_line is None:
+                    else_line = end_line
+                    end_line += 1
+                    continue
+                if tks[0] == "END":
+                    break
+                end_line += 1
+            else:
+                raise SyntaxErrorException("Missing END for IF/OTHERWISE", lineNumber)
+
+            # decide which block to run
+            if eval_bool_expr(cond_tokens, lineNumber):
+                start = lineNumber + 1
+                stop = else_line if else_line else end_line
+            elif else_line:
+                start = else_line + 1
+                stop = end_line
+            else:
+                start = end_line
+                stop = end_line
+
+            # run the chosen block
+            j = start
+            while j < stop:
+                raw = codingList[j - 1]
+                line = removecomments(raw).strip()
+                tks = tokeniser(line, j)
+                if not tks:
+                    j += 1
+                    continue
+                res = parser(tks, j, numLines, codingList)
+                if isinstance(res, int):
+                    j = res
+                else:
+                    j += 1
+
+            # continue after END
+            return end_line + 1
+            
 
 
-    
+        case "WHILE":
+            # evaluate condition as a list of tokens (AND binds tighter than OR)
+            cond_tokens = tokens[1:]
+
+            # find the matching END for this WHILE (single-level)
+            end_line = lineNumber + 1
+            while end_line <= numLines:
+                raw = codingList[end_line - 1]
+                line = removecomments(raw).strip()
+                tks = tokeniser(line, end_line)
+                if tks and tks[0] == "END":
+                    break
+                end_line += 1
+            else:
+                raise SyntaxErrorException("Missing END for WHILE", lineNumber)
+
+            # execute the body while condition holds
+            while eval_bool_expr(cond_tokens, lineNumber):
+                j = lineNumber + 1
+                while j < end_line:
+                    raw = codingList[j - 1]
+                    line = removecomments(raw).strip()
+                    tks = tokeniser(line, j)
+                    if not tks:
+                        j += 1
+                        continue
+                    res = parser(tks, j, numLines, codingList)
+                    if isinstance(res, int):
+                        j = res
+                    else:
+                        j += 1
+
+            # continue after matching END
+            return end_line + 1
+                
+        case _:
+            if head[0].isalpha():
+                #Process for assigning a variable
+                if len(tokens) ==3 and tokens[1] == ":=":
+                    variabledict[tokens[0]] = boolConversions(tokens[2], lineNumber)
+                else:
+                    raise SyntaxErrorException("Invalid assignment line", lineNumber)
+            else:
+                raise SyntaxErrorException("Invalid token", lineNumber)
+
+            
+
+
+def boolConversions(name, lineNumber):
+    match name:
+        case "FRONT_IS_CLEAR":
+            license
+        case "ON_KEY":
+            license
+        case "AT_DOOR":
+            license
+        case "AT_EXIT":
+            license
+        case _:
+            if name in variabledict:
+                return variabledict[name]
+            raise SyntaxErrorException("assigning something undeclared", lineNumber)
+
     
 
 
@@ -117,5 +260,40 @@ def program3():
     return
 
     
+
+def eval_bool_expr(tokens, lineNumber):
+    n = len(tokens)
+    i = 0 
+    def readTerm():
+        nonlocal i
+        if i >= n:
+            raise SyntaxErrorException("Expected boolean term", lineNumber)
+        token = tokens[i]
+        i += 1
+        if token == "TRUE":
+            return True
+        if token == "FALSE":
+            return False
+        return boolConversions(token, lineNumber)  
     
+    def parse_and():
+        nonlocal i
+        left = readTerm()
+        while i < n and tokens[i] == "AND":
+            i += 1
+            right = readTerm()
+            left = left and right
+        return left
+    def parse_or():
+        nonlocal i
+        left = parse_and() 
+        while i < n and tokens[i] == "OR":
+            i += 1
+            right = parse_and()
+            left = left or right
+        return left
+    result = parse_or()
+    if i != n:
+        raise SyntaxErrorException("Unexpected tokens at end of boolean expression", lineNumber)
+    return result
 
