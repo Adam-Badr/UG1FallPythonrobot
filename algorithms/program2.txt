@@ -1,0 +1,68 @@
+@ Program 2: Snake-like Systematic Room Exploration
+@ Robot starts at lower-left facing north
+@ Goal: Find KEY + open DOOR OR find EXIT (whichever comes first)
+@ Environment: Orthogonal rectangular room with 4 walls, no obstacles
+@ Strategy: Snake pattern - sweep row by row like a snake
+
+LOAD 2
+
+@ Initialize state variables
+haskey := FALSE
+goingright := FALSE
+
+@ Main exploration loop - Snake pattern sweep
+WHILE TRUE
+    @ Priority 1: Check for immediate escape via exit hatch
+    IF AT_EXIT
+        @ Exit hatch found - stay here to escape
+        @ The maze will detect this as solved automatically
+    END
+    
+    @ Priority 2: Check if at door with key
+    IF AT_DOOR AND haskey  
+        OPEN_DOOR
+    END
+    
+    @ Priority 3: Pick up key if on it
+    IF ON_KEY
+        PICK_KEY
+        haskey := TRUE
+    END
+    
+    @ Snake movement pattern
+    IF FRONT_IS_CLEAR
+        @ Continue in current direction
+        MOVE_FORWARD
+    OTHERWISE
+        @ Hit a wall - time to change direction (snake turn)
+        IF goingright
+            @ Currently going right, turn to go down
+            TURN_RIGHT
+            IF FRONT_IS_CLEAR
+                MOVE_FORWARD
+                @ Turn right again to go left (opposite direction)
+                TURN_RIGHT
+                goingright := FALSE
+            OTHERWISE
+                @ No room to go down, must be at bottom
+                TURN_RIGHT
+                TURN_RIGHT
+            END
+        OTHERWISE
+            @ Currently going left, turn to go down  
+            TURN_LEFT
+            IF FRONT_IS_CLEAR
+                MOVE_FORWARD
+                @ Turn left again to go right (opposite direction)
+                TURN_LEFT
+                goingright := TRUE
+            OTHERWISE
+                @ No room to go down, must be at bottom
+                TURN_LEFT
+                TURN_LEFT
+            END
+        END
+    END
+END
+
+END

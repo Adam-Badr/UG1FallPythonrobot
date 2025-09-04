@@ -154,7 +154,7 @@ def run_program1_on_corridor(test_name, maze):
     
     # Load Program 1 code
     try:
-        with open('solve_map.txt', 'r') as f:
+        with open('../algorithms/program1.txt', 'r') as f:
             program1_code = f.read()
     except FileNotFoundError:
         print("❌ Error: solve_map.txt not found")
