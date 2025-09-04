@@ -1,0 +1,30 @@
+@ Load the twisting corridor environment
+LOAD 2
+
+@ Main loop to keep the robot moving
+WHILE TRUE
+    @ If we find the key, pick it up
+    IF ON_KEY
+        PICK_KEY
+    END
+
+    @ If we are at the door with the key, open it
+    IF AT_DOOR
+        OPEN_DOOR
+    END
+
+    @ If the left side is clear, turn left and move
+    TURN_LEFT
+    IF FRONT_IS_CLEAR
+        MOVE_FORWARD
+    OTHERWISE
+        @ Left is blocked, so turn back right and try forward
+        TURN_RIGHT
+        IF FRONT_IS_CLEAR
+            MOVE_FORWARD
+        OTHERWISE
+            @ Front is also blocked, must be a corner, turn right again
+            TURN_RIGHT
+        END
+    END
+END

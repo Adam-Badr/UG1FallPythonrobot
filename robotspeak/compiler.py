@@ -100,9 +100,9 @@ def tokeniser(line, lineNumber):
     return line
 
 
-def parser(tokens, lineNumber, numLines, codingList):
+def parser(tokens, lineNumber, numLines, codingList, num_executed_lines = 2):
     #case it is the first line
-    if lineNumber ==1:
+    if num_executed_lines ==  1:
         if tokens[0] != "LOAD":
             raise SyntaxErrorException("LOAD is not the first token.", lineNumber)
         if len(tokens) == 1:
@@ -119,12 +119,13 @@ def parser(tokens, lineNumber, numLines, codingList):
                 load_program3()
         return
         
-    if lineNumber ==numLines: #final line
+    if lineNumber == numLines: #final line
         if len(tokens) == 1 and tokens[0] == "END":
                 return "HALT" #end the program
         else:
             raise SyntaxErrorException("END is not the only token on the last line", lineNumber)
-    #normal lines
+    
+    # normal lines
     head = tokens[0]
     match head:
         case "LOAD":
@@ -335,12 +336,12 @@ def eval_bool_expr(tokens, lineNumber):
 
 # compiler
 def compiler(robotspeak_program):
-    # breaking the program into lines and removing lines
+    # breaking the program into lines and removing comments
     code_lines = robotspeak_program.strip().split('\n')
     code_lines = [remove_comments(code_line) for code_line in code_lines]
-    code_lines = [code_line for code_line in code_lines if len(code_line) > 0]
 
     lineNumber = 0
+    num_executed_lines = 0
     numLines = len(code_lines)
 
     while lineNumber < len(code_lines):
@@ -349,9 +350,11 @@ def compiler(robotspeak_program):
         tokens = tokeniser(line, lineNumber)
         if not tokens:
             continue
+        else:
+            num_executed_lines += 1
 
         #parsing
-        result = parser(tokens, lineNumber, numLines, code_lines)
+        result = parser(tokens, lineNumber, numLines, code_lines, num_executed_lines)
         if result == "HALT":
             break
 

@@ -8,12 +8,12 @@ version = "0.0.1"
 authors = [
     { name="Adam Badr", email="Adambadr27@hotmail.com" },
     { name="Abror Shopulatov", email="murodbeck@proton.me" },
-    { name="Yelarys Yertaiuly", email="" },
+    { name="Yelarys Yertaiuly", email="elarysertaj@gmail.com" },
 ]
 maintainers = [
     { name="Adam Badr", email="Adambadr27@hotmail.com" },
     { name="Abror Shopulatov", email="murodbeck@proton.me" },
-    { name="Yelarys Yertaiuly", email="" },
+    { name="Yelarys Yertaiuly", email="elarysertaj@gmail.com" },
 ]
 license = {file = "LICENSE"}
 keywords = ["robotspeak", "programming-language", "robot", "2d-environment", "interpreter"]
