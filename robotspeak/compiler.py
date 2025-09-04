@@ -1,4 +1,5 @@
-from maze import *
+from maze import Maze, MazeActionError, MazeValidationError
+
 #collection of variables
 global lineNumber
 variabledict = {}
@@ -89,15 +90,34 @@ def parser(tokens, lineNumber, numLines, codingList):
         case "LOAD":
             raise SyntaxErrorException("Cannot have more than 1 LOAD", lineNumber)
         case "MOVE_FORWARD":
-            lineNumber
+            try:
+                maze.move_forward()
+                print("\nAction: MOVE_FORWARD")
+                maze.print_map()
+            except MazeActionError as e:
+                print(f"Warning at line {lineNumber}: {e}")
         case "TURN_LEFT":
-            lineNumber
+            maze.turn_left()
+            print("\nAction: TURN_LEFT")
+            maze.print_map()
         case "TURN_RIGHT":
-            lineNumber
+            maze.turn_right()
+            print("\nAction: TURN_RIGHT")
+            maze.print_map()
         case "PICK_KEY":
-            lineNumber
+            try:
+                maze.pick_key()
+                print("\nAction: PICK_KEY")
+            except MazeActionError as e:
+                print(f"Warning at line {lineNumber}: {e}")
         case "OPEN_DOOR":
-            lineNumber
+            try:
+                maze.open_door()
+                print("\nAction: OPEN_DOOR")
+                if maze.is_maze_solved():
+                    print("\n*** MAZE SOLVED! ***")
+            except MazeActionError as e:
+                print(f"Warning at line {lineNumber}: {e}")
         case "IF":
             # condition is everything after IF
             cond_tokens = tokens[1:]
@@ -202,15 +222,23 @@ def parser(tokens, lineNumber, numLines, codingList):
 
 
 def boolConversions(name, lineNumber):
+    global maze
+    if maze is None:
+        raise RuntimeErrorException("Maze has not been loaded yet.", lineNumber)
+    
     match name:
         case "FRONT_IS_CLEAR":
-            license
+            return maze.is_front_clear()
         case "ON_KEY":
-            license
+            return maze.on_key()
         case "AT_DOOR":
-            license
+            return maze.at_door()
         case "AT_EXIT":
-            license
+            return maze.at_exit()
+        case "TRUE":
+            return True
+        case "FALSE":
+            return False
         case _:
             if name in variabledict:
                 return variabledict[name]
@@ -251,11 +279,43 @@ def tokeniser(line, lineNumber):
 
     return line
 
-
 def program1():
-    return
+    global maze
+    print("--- Loading Program 1: Twisting Corridor ---")
+    maze = Maze(width = 6, 
+                length = 1, 
+                key_location = [1, 1], 
+                door_location = [6, 1], 
+                exit_location = [4, 1], 
+                robot_location = [2, 1],
+                robot_direction = 'south')
+    try:
+        maze.create_initial_map()
+
+    except MazeValidationError as e:
+        print(f"Warning at line 1: {e}")
+
+    print("Initial Maze State:")
+    maze.print_map()
+
 def program2():
-    return
+    global maze
+    print("--- Loading Program 2: Orthogonal Corridor ---")
+    maze = Maze(width = 6, 
+                length = 5, 
+                key_location = [4, 4], 
+                door_location = [6, 5], 
+                exit_location = [4, 1], 
+                robot_location = [2, 2])
+    try:
+        maze.create_initial_map()
+
+    except MazeValidationError as e:
+        print(f"Warning at line 1: {e}")
+        
+    print("Initial Maze State:")
+    maze.print_map()
+
 def program3():
     return
 
