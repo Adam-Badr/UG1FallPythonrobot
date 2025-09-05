@@ -80,6 +80,7 @@ def load_program2():
     maze.print_map()
 
 def load_program3():
+    print("WE REALLY GOTTA CODE THIS")
     return
 
 # tokeniser

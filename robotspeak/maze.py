@@ -320,12 +320,14 @@ class Maze:
         
         Sets has_opened_door to True if successful. Does nothing otherwise.
         """
+        if self.at_exit():
+            self.has_opened_door = True
+            return
+
         if not self.at_door():
             raise MazeActionError("Not on the door, not opening")
-        
         if not self.has_key:
             raise MazeActionError("No key found, not opening")
-        
         self.has_opened_door = True
 
     # utilities

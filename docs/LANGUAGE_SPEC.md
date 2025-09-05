@@ -39,10 +39,7 @@ assign_stmt ::= identifier ":=" expr ;
 
 expr        ::= term { "OR" term } ;
 term        ::= factor { "AND" factor } ;
-factor      ::= "(" expr ")"
-              | literal
-              | sensor
-              | identifier ;
+factor      ::= literal | sensor | identifier ;
 
 literal     ::= "TRUE" | "FALSE" ;
 sensor      ::= "FRONT_IS_CLEAR" | "ON_KEY" | "AT_DOOR" | "AT_EXIT" ;
