@@ -169,7 +169,7 @@ def run_program2_on_room(test_name, maze):
     
     # Load Program 2 code
     try:
-        with open('../algorithms/program2.txt', 'r') as f:
+        with open('algorithms/program2.txt', 'r') as f:
             program2_code = f.read()
     except FileNotFoundError:
         print("❌ Error: program2.txt not found")

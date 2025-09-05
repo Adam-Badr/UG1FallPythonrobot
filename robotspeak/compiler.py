@@ -67,9 +67,9 @@ def load_program2():
     maze = Maze(width = 6, 
                 length = 5, 
                 key_location = [4, 4], 
-                door_location = [6, 5], 
-                exit_location = [4, 1], 
-                robot_location = [1, 5])
+                door_location = [5, 5], 
+                exit_location = [6, 5], 
+                robot_location = [2, 4])
     try:
         maze.create_initial_map()
 
