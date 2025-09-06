@@ -1,0 +1,76 @@
+@ Program 3: Multi-Key Exploration with Unknown Start and Orientation
+@ World: Orthogonal rectangular room with 4 surrounding walls, no obstacles
+@ Objects: Multiple KEYS (only one opens the DOOR), one DOOR, one EXIT hatch
+@ Start: Robot starts at an unknown tile and facing an unknown direction
+@ Goal: Escape via EXIT hatch immediately if found, or find the correct KEY and open the DOOR
+
+LOAD 3
+
+@ Initialize state variables
+haskey := FALSE
+goingright := TRUE
+
+@ Phase 1: Move to a corner from unknown position and orientation
+@ Step A: Advance straight until we hit a wall
+WHILE FRONT_IS_CLEAR
+    MOVE_FORWARD
+END
+@ Step B: Turn left and go to the adjacent wall — now at a corner
+TURN_LEFT
+WHILE FRONT_IS_CLEAR
+    MOVE_FORWARD
+END
+
+@ Phase 2: Systematic sweep (boustrophedon snake) from the corner
+@ This works from any corner and orientation
+WHILE TRUE
+    @ Priority 1: Escape if at EXIT
+    IF AT_EXIT
+        OPEN_DOOR
+    END
+
+    @ Priority 2: Open DOOR if we have a key (only the correct one opens it)
+    IF AT_DOOR AND haskey
+        OPEN_DOOR
+    END
+
+    @ Priority 3: Pick up any key we find
+    IF ON_KEY
+        PICK_KEY
+        haskey := TRUE
+    END
+
+    @ Movement: Continue forward if possible; otherwise perform snake turn
+    IF FRONT_IS_CLEAR
+        MOVE_FORWARD
+    OTHERWISE
+        IF goingright
+            @ Try to step one row/column inward, then reverse direction
+            TURN_RIGHT
+            IF FRONT_IS_CLEAR
+                MOVE_FORWARD
+                TURN_RIGHT
+                goingright := FALSE
+            OTHERWISE
+                @ No more space to go inward — likely reached final lane
+                TURN_RIGHT
+                TURN_RIGHT
+            END
+        OTHERWISE
+            TURN_LEFT
+            IF FRONT_IS_CLEAR
+                MOVE_FORWARD
+                TURN_LEFT
+                goingright := TRUE
+            OTHERWISE
+                TURN_LEFT
+                TURN_LEFT
+            END
+        END
+    END
+END
+
+@ End of Program 3
+END
+
+

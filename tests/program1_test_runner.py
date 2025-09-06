@@ -154,10 +154,12 @@ def run_program1_on_corridor(test_name, maze):
     
     # Load Program 1 code
     try:
-        with open('algorithms/program1.txt', 'r') as f:
+        repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        program1_path = os.path.join(repo_root, 'algorithms', 'program1.txt')
+        with open(program1_path, 'r') as f:
             program1_code = f.read()
     except FileNotFoundError:
-        print("❌ Error: solve_map.txt not found")
+        print(f"❌ Error: program1.txt not found at {program1_path}")
         return False
     
     print("📋 Program 1 Strategy:")
@@ -184,10 +186,23 @@ def run_program1_on_corridor(test_name, maze):
     print("-" * 40)
     
     try:
+        # Enhance parser to stop immediately when solved
+        original_parser = compiler_module.parser
+
+        def enhanced_parser(tokens, lineNumber, numLines, codingList, num_executed_lines=2):
+            result = original_parser(tokens, lineNumber, numLines, codingList, num_executed_lines)
+            if compiler_module.maze and compiler_module.maze.is_maze_solved():
+                print("\n*** MAZE SOLVED! ***")
+                return "HALT"
+            return result
+
+        compiler_module.parser = enhanced_parser
+
         compiler(program1_code)
         
-        # Restore original load function
+        # Restore original functions
         compiler_module.load_program1 = original_load
+        compiler_module.parser = original_parser
         
         print("-" * 40)
         if maze.is_maze_solved():
@@ -202,6 +217,12 @@ def run_program1_on_corridor(test_name, maze):
             
     except Exception as e:
         print(f"❌ ERROR: {test_name} - {e}")
+        # Attempt to restore on error
+        try:
+            compiler_module.load_program1 = original_load
+            compiler_module.parser = original_parser
+        except Exception:
+            pass
         return False
 
 def main():
