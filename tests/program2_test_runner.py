@@ -169,10 +169,12 @@ def run_program2_on_room(test_name, maze):
     
     # Load Program 2 code
     try:
-        with open('algorithms/program2.txt', 'r') as f:
+        repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        program2_path = os.path.join(repo_root, 'algorithms', 'program2.txt')
+        with open(program2_path, 'r') as f:
             program2_code = f.read()
     except FileNotFoundError:
-        print("❌ Error: program2.txt not found")
+        print(f"❌ Error: program2.txt not found at {program2_path}")
         return False
     
     print("📋 Program 2 Strategy:")
@@ -260,7 +262,7 @@ def main():
     test_cases = create_test_rooms()
     
     # Run only first test case for now to avoid infinite loops
-    test_cases = [test_cases[0]]
+    # test_cases = [test_cases[0]]
     
     # Run tests
     results = []
