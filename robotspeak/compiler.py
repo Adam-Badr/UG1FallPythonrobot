@@ -7,16 +7,11 @@ variabledict = {}
 VOCABULARY = {
     "LOAD", "IF", "OTHERWISE", "WHILE", "END", "AND", "OR", "TRUE", "FALSE", 
     "MOVE_FORWARD", "TURN_LEFT", "TURN_RIGHT", "PICK_KEY", "OPEN_DOOR",
-    "FRONT_IS_CLEAR", "ON_KEY", "AT_DOOR", "AT_EXIT", "1", "2", "3", ":="
+    "FRONT_IS_CLEAR", "ON_KEY", "AT_DOOR", "AT_EXIT", "1", "2", "3", ":=",
+    #new variables
+    "THROW_AWAY_KEY"
 }
 VALID_LOADING_ENVS = {"1", "2", "3"}
-
-
-
-
-
-
-
 
 # exceptions
 class SyntaxErrorException(Exception):
@@ -47,7 +42,7 @@ def load_program1():
     print("--- Loading Program 1: Twisting Corridor ---")
     maze = Maze(width = 6, 
                 length = 1, 
-                key_location = [1, 1], 
+                key_locations = [[1, 1]],
                 door_location = [6, 1], 
                 exit_location = [4, 1], 
                 robot_location = [2, 1],
@@ -66,8 +61,8 @@ def load_program2():
     print("--- Loading Program 2: Orthogonal Corridor ---")
     maze = Maze(width = 6, 
                 length = 5, 
-                key_location = [4, 4], 
-                door_location = [5, 5], 
+                key_locations = [[4, 4]],
+                door_location = [1, 3], 
                 exit_location = [6, 5], 
                 robot_location = [2, 4])
     try:
@@ -80,8 +75,23 @@ def load_program2():
     maze.print_map()
 
 def load_program3():
-    print("WE REALLY GOTTA CODE THIS")
-    return
+    global maze
+    print("--- Loading Program 3: Orthogonal Corridor with multiple keys ---")
+    maze = Maze(width = 6, 
+                length = 5, 
+                key_locations = [[2, 4], [5, 2]],
+                true_key_idx = 2,
+                door_location = [6, 5], 
+                exit_location = [4, 1], 
+                robot_location = [1, 1])
+    try:
+        maze.create_initial_map()
+
+    except MazeValidationError as e:
+        print(f"Warning at line 1: {e}")
+        
+    print("Initial Maze State:")
+    maze.print_map()
 
 # tokeniser
 def tokeniser(line, lineNumber):
@@ -134,28 +144,31 @@ def parser(tokens, lineNumber, numLines, codingList, num_executed_lines = 2):
         case "MOVE_FORWARD":
             try:
                 maze.move_forward()
-                print("\nAction: MOVE_FORWARD")
+                print(f"\nAction: MOVE_FORWARD {maze.get_status()}")
                 maze.print_map()
             except MazeActionError as e:
                 print(f"Warning at line {lineNumber}: {e}")
         case "TURN_LEFT":
             maze.turn_left()
-            print("\nAction: TURN_LEFT")
+            print(f"\nAction: TURN_LEFT {maze.get_status()}")
             maze.print_map()
         case "TURN_RIGHT":
             maze.turn_right()
-            print("\nAction: TURN_RIGHT")
+            print(f"\nAction: TURN_RIGHT {maze.get_status()}")
             maze.print_map()
         case "PICK_KEY":
             try:
                 maze.pick_key()
-                print("\nAction: PICK_KEY")
+                print(f"\nAction: PICK_KEY {maze.get_status()}")
             except MazeActionError as e:
                 print(f"Warning at line {lineNumber}: {e}")
+        case "THROW_AWAY_KEY":
+            maze.throw_away_key()
+            print(f"\nAction: THROW_AWAY_KEY {maze.get_status()}")
         case "OPEN_DOOR":
             try:
                 maze.open_door()
-                print("\nAction: OPEN_DOOR")
+                print(f"\nAction: OPEN_DOOR")
                 if maze.is_maze_solved():
                     print("\n*** MAZE SOLVED! ***")
                     return "HALT"

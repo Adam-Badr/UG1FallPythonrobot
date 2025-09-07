@@ -1,7 +1,8 @@
-from typing import Tuple
+from typing import Tuple, List
 from itertools import combinations
 
 KEY_SYMBOL = "K"
+TRUE_KEY_SYMBOL = "˖"
 DOOR_SYMBOL = "D"
 EXIT_SYMBOL = "E"
 WALL_SYMBOL = "*"
@@ -13,12 +14,13 @@ class MazeValidationError(Exception):
     pass
 
 class MazeActionError(Exception):
-    """Custom exception for maze validation errors"""
+    """Custom exception for maze action errors"""
     pass
 
 class Maze:
     """
     A maze environment with a robot that can navigate, collect keys, and reach exits.
+    Supports multiple keys, where only one is the true key.
     
     Uses 1-based coordinate system where (1,1) is the top-left navigable cell.
     Matrix internally uses 0-based indexing with wall borders.
@@ -26,18 +28,20 @@ class Maze:
     def __init__(self, 
                  width: int, 
                  length: int, 
-                 key_location: Tuple[int, int], 
+                 key_locations: List[Tuple[int, int]], 
                  door_location: Tuple[int, int], 
                  exit_location: Tuple[int, int], 
                  robot_location: Tuple[int, int],
-                 robot_direction: str = 'north'):
+                 robot_direction: str = 'north',
+                 true_key_idx: int = 1):
         """
         Initialize a new maze with specified dimensions and object locations.
         
         Args:
             width: Maze width (number of navigable columns)
             length: Maze height (number of navigable rows)  
-            key_location: Key position as (x, y) in 1-based coordinates
+            key_locations: A list of key positions as [(x, y), ...] in 1-based coordinates
+            true_key_idx: The 1-based index of the correct key in the key_locations list
             door_location: Door position as (x, y) in 1-based coordinates
             exit_location: Exit position as (x, y) in 1-based coordinates
             robot_location: Robot starting position as (x, y) in 1-based coordinates
@@ -45,7 +49,9 @@ class Maze:
         """
         self.width = width
         self.length = length
-        self.key_location = key_location
+        self.key_locations = key_locations
+        self.true_key_idx = true_key_idx - 1 # Convert to 0-based index
+        self.true_key_location = []
         self.door_location = door_location
         self.exit_location = exit_location
         self.robot_location = robot_location
@@ -55,6 +61,7 @@ class Maze:
         self.map_matrix = []
 
         self.key_symbol = KEY_SYMBOL
+        self.true_key_symbol = TRUE_KEY_SYMBOL
         self.door_symbol = DOOR_SYMBOL
         self.exit_symbol = EXIT_SYMBOL
         self.wall_symbol = WALL_SYMBOL
@@ -66,6 +73,7 @@ class Maze:
         self._all_direction_coordinates = [[0, -1], [-1, 0], [0, 1], [1, 0]]
 
         self.has_key = False
+        self.has_true_key = False
         self.has_opened_door = False
     
     # getters
@@ -77,9 +85,13 @@ class Maze:
         """Return the maze length."""
         return self.length
 
-    def get_key_location(self) -> Tuple[int, int]:
-        """Return the key location as (x, y)"""
-        return self.key_location
+    def get_key_locations(self) -> List[Tuple[int, int]]:
+        """Return the list of key locations as [(x, y), ...]"""
+        return self.key_locations
+
+    def get_true_key_location(self) -> Tuple[int, int]:
+        """Return the true key location as (x, y)"""
+        return self.true_key_location
 
     def get_door_location(self) -> Tuple[int, int]:
         """Return the door location as (x, y)"""
@@ -93,13 +105,24 @@ class Maze:
         """Return the robot location as (x, y)"""
         return self.robot_location
     
-    def get_robot_direction(self) -> Tuple[int, int]:
+    def get_robot_direction(self) -> str:
         """Return the current robot direction as a string."""
         return self.robot_direction
     
     def get_map_matrix(self) -> list:
         """Return the internal map matrix including wall borders."""
         return self.map_matrix
+    
+    def get_status(self) -> str:
+        """Return a descriptive status of the robot's state."""
+        if not self.has_key:
+            inventory_status = ""
+        elif self.has_true_key:
+            inventory_status = "Holding the TRUE key"
+        else:
+            inventory_status = "Holding a false key"
+        
+        return f"({inventory_status})" if inventory_status != "" else ""
     
     # setters
     def set_location(self, location: list, symbol: str) -> None:
@@ -117,12 +140,16 @@ class Maze:
         if self.map_matrix[y_coordinate][x_coordinate] == self.empty_symbol:
             self.map_matrix[y_coordinate][x_coordinate] = symbol
         else:
+            # Append symbol if the cell is not empty (e.g., robot on a key)
             self.map_matrix[y_coordinate][x_coordinate] += symbol
     
     def set_direction_coordinate(self) -> None:
         """Update robot_direction_coordinate based on current robot_direction."""
         direction_idx = self._all_directions.index(self.robot_direction)
         self.robot_direction_coordinate = self._all_direction_coordinates[direction_idx]
+    
+    def set_true_key_location(self):
+        self.true_key_location = self.key_locations[self.true_key_idx]
 
     # validators
     def _validate_unique_symbols(self) -> None:
@@ -145,7 +172,6 @@ class Maze:
 
         for combo in combos:
             symbol1, symbol2 = combo
-            # print(combo)
             if symbol1[1] == symbol2[1]:
                 raise MazeValidationError(f"You are using the same symbol ({symbol1[1]}) for both {symbol1[0].upper()} and {symbol2[0].upper()}.")
             
@@ -171,16 +197,24 @@ class Maze:
         
         if not (1 <= y <= self.length):
             raise MazeValidationError(f"{name} y-coordinate {y} must be between 1 and {self.length}")
-    
+
+    def _validate_key_locations(self) -> None:
+        """Validate the list of key locations."""
+        if not isinstance(self.key_locations, list) or not self.key_locations:
+            raise MazeValidationError("key_locations must be a non-empty list.")
+        
+        for i, loc in enumerate(self.key_locations):
+            self._validate_location(loc, f"key[{i}]")
+        
+        if not (0 <= self.true_key_idx < len(self.key_locations)):
+            raise MazeValidationError(f"true_key_idx ({self.true_key_idx}) must be between 1 and {len(self.key_locations)}.")
+
     def _validate_direction(self, direction: str) -> None:
         """Validate robot direction"""
-        if not isinstance(direction, str):
-            raise MazeValidationError("Direction must be a string")
-        
-        if direction.lower() not in ['north', 'west', 'south', 'east']:
-            raise MazeValidationError(f"Direction must be one of: north, west, south, east. Got: {direction}")
+        if direction.lower() not in self._all_directions:
+            raise MazeValidationError(f"Direction must be one of: {self._all_directions}")
     
-    def validate_intial_inputs(self):
+    def validate_initial_inputs(self):
         """
         Validate all initial maze parameters.
         
@@ -188,14 +222,11 @@ class Maze:
             MazeValidationError: If any parameter is invalid
         """
         self._validate_unique_symbols()
-
         self._validate_dimensions(self.width, self.length)
-
-        self._validate_location(self.key_location, "key")
+        self._validate_key_locations()
         self._validate_location(self.door_location, "door")
         self._validate_location(self.exit_location, "exit")
         self._validate_location(self.robot_location, "robot")
-
         self._validate_direction(self.robot_direction)
     
     # initial setup
@@ -206,7 +237,7 @@ class Maze:
         Validates inputs, creates bordered matrix with walls, and places
         key, door, exit, and robot at their specified locations.
         """
-        self.validate_intial_inputs()
+        self.validate_initial_inputs()
         
         self.map_matrix = []
 
@@ -215,7 +246,11 @@ class Maze:
             self.map_matrix.append([self.wall_symbol] + [self.empty_symbol] * self.width + [self.wall_symbol])
         self.map_matrix.append([self.wall_symbol] * (self.width + 2))
 
-        self.set_location(self.key_location, self.key_symbol)
+        for loc in self.key_locations:
+            self.set_location(loc, self.key_symbol)
+        self.set_true_key_location()
+        
+        self.set_location(self.true_key_location, self.true_key_symbol)
         self.set_location(self.door_location, self.door_symbol)
         self.set_location(self.exit_location, self.exit_symbol)
         self.set_location(self.robot_location, self.robot_symbol)
@@ -233,19 +268,17 @@ class Maze:
         front_x = self.robot_location[0] + self.robot_direction_coordinate[0]
         front_y = self.robot_location[1] + self.robot_direction_coordinate[1]
 
-        if self.map_matrix[front_y][front_x] == self.wall_symbol:
-            return False
-        
-        return True
+        return self.map_matrix[front_y][front_x] != self.wall_symbol
 
     def on_key(self) -> bool:
         """
-        Check if the robot is currently on the key location.
+        Check if the robot is currently on any key location.
         
         Returns:
             True if robot's current position contains the key symbol
         """
-        return self.key_symbol in self.map_matrix[self.robot_location[1]][self.robot_location[0]]
+        current_cell = self.map_matrix[self.robot_location[1]][self.robot_location[0]]
+        return (self.key_symbol in current_cell) or (self.true_key_symbol in current_cell) 
 
     def at_door(self) -> bool:
         """
@@ -304,31 +337,60 @@ class Maze:
         self.robot_direction_coordinate = self._all_direction_coordinates[(current_idx + 1) % 4]
 
     def pick_key(self) -> None:
-        """
-        Pick up the key if the robot is on the key location.
-        
-        Sets has_key to True if successful. Does nothing if not on key.
-        """
+        """Pick up a key if the robot is on one and not already holding one."""
+        if self.has_key:
+            raise MazeActionError("Already holding a key.")
         if not self.on_key():
-            raise MazeActionError("Not on the key, not picking up")
+            raise MazeActionError("Not on an available key.")
         
+        x, y = self.robot_location
+        current_cell = self.map_matrix[y][x]
+
         self.has_key = True
-    
-    def open_door(self) -> None:
-        """
-        Open the key if the robot is at the door location and has a key.
+        current_cell = current_cell.replace(self.key_symbol, "", 1)
         
-        Sets has_opened_door to True if successful. Does nothing otherwise.
-        """
+        if (self.true_key_symbol in current_cell) or len(self.key_locations) == 1:
+            self.has_true_key = True
+            current_cell = current_cell.replace(self.true_key_symbol, "", 1)
+        else: # Must be a regular key
+            self.has_true_key = False
+
+        # If removing the key left the cell empty (aside from the robot), set to empty symbol
+        if not current_cell.replace(self.robot_symbol, ""):
+            self.map_matrix[y][x] = self.robot_symbol
+        else:
+            self.map_matrix[y][x] = current_cell
+
+    def throw_away_key(self) -> None:
+        """Drops the currently held key at the robot's current location."""
+        if not self.has_key:
+            raise MazeActionError("Not holding any key to throw away.")
+        
+        print(f"Throwing away key at {self.robot_location}.")
+        
+        # Add key back to map and update state
+        self.set_location(self.robot_location, self.key_symbol)
+        self.has_key = False
+
+        if self.has_true_key:
+            self.set_location(self.robot_location, self.true_key_symbol)
+            self.has_true_key = False
+
+    def open_door(self) -> None:
+        """Open the door if at the door location and holding the true key."""
         if self.at_exit():
             self.has_opened_door = True
             return
 
         if not self.at_door():
-            raise MazeActionError("Not on the door, not opening")
+            raise MazeActionError("Not at the door.")
         if not self.has_key:
-            raise MazeActionError("No key found, not opening")
-        self.has_opened_door = True
+            raise MazeActionError("Not holding any key.")
+        if self.has_true_key:
+            self.has_opened_door = True
+            print("Door opened successfully!")
+        else:
+            raise MazeActionError("Wrong key! Cannot open the door.")
 
     # utilities
     def print_map(self, delimiter: str = ' ') -> None:
@@ -364,38 +426,76 @@ class Maze:
         Returns:
             True if robot is at exit, or at door with key collected
         """
-        if self.at_exit() or self.has_opened_door:
-            return True
-        
-        return False
+        return self.at_exit() or self.has_opened_door
 
 if __name__ == "__main__":
     print("Creating initial map with 6x5 maze")
     maze = Maze(width = 6, 
                 length = 5, 
-                key_location = [4, 4], 
+                key_locations = [[2, 4], [5, 2]],
+                true_key_idx = 2,
                 door_location = [6, 5], 
                 exit_location = [4, 1], 
-                robot_location = [2, 2])
+                robot_location = [1, 1])
     maze.create_initial_map()
     maze.print_map()
+    print(maze.get_status())
 
-    print()
-    print("Moving forward:")
-    maze.move_forward()
-    maze.print_map()
-
-    print()
-    print("Turning left:")
+    print("\n1. Robot moves to the false key at (2, 4) and picks it up.")
     maze.turn_left()
-    maze.print_map()
-
-    print()
-    print("Moving forward:")
+    maze.turn_left()
     maze.move_forward()
-    maze.print_map()
-
-    print()
-    print("Moving forward:")
     maze.move_forward()
+    maze.move_forward()
+    maze.turn_left()
+    maze.move_forward()
+    maze.pick_key()
     maze.print_map()
+    print(maze.get_status())
+
+    print("\n2. Robot moves to the door at (6, 5) and fails to open it.")
+    maze.move_forward()
+    maze.move_forward()
+    maze.move_forward()
+    maze.move_forward()
+    maze.turn_right()
+    maze.move_forward()
+    try:
+        maze.open_door()
+    except MazeActionError as e:
+        print(f"Action failed: {e}")
+    maze.print_map()
+    print(maze.get_status())
+
+    print("\n3. Throwing away the false key.")
+    maze.throw_away_key()
+    maze.print_map()
+    print(maze.get_status())
+
+    print("\n4. Robot goes for the TRUE key at (5, 2) and picks it up.")
+    maze.turn_left()
+    maze.turn_left()
+    maze.move_forward()
+    maze.move_forward()
+    maze.move_forward()
+    maze.turn_left()
+    maze.move_forward()
+    maze.pick_key()
+    maze.print_map()
+    print(maze.get_status())
+
+    print("\n5. Robot returns to the door and successfully opens it.")
+    maze.turn_right()
+    maze.turn_right()
+    maze.move_forward()
+    maze.turn_right()
+    maze.move_forward()
+    maze.move_forward()
+    maze.move_forward()
+    try:
+        maze.open_door()
+    except MazeActionError as e:
+        print(f"Action failed: {e}")
+    
+    maze.print_map()
+    print(f"Maze solved? {maze.is_maze_solved()}")
