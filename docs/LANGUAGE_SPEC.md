@@ -113,7 +113,7 @@ WHILE FRONT_IS_CLEAR
 END
 OPEN_DOOR
 END
-
+```
 ### Token counts (line by line)
 - `LOAD 1` → [LOAD, 1] (2 tokens)  
 - `WHILE FRONT_IS_CLEAR` → [WHILE, FRONT_IS_CLEAR] (2 tokens)  
