@@ -34,10 +34,10 @@ TURN_RIGHT
 @ Main exploration loop - Snake pattern sweep
 WHILE TRUE
     @ Priority 1: Check for immediate escape via exit hatch
-    @IF AT_EXIT
+    IF AT_EXIT
         @ Exit hatch found
-     @   OPEN_DOOR
-    @END
+        OPEN_DOOR
+    END
     
     @ Priority 2: Check if at door with key
     IF AT_DOOR AND haskey  
