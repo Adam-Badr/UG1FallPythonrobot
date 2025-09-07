@@ -40,7 +40,7 @@ class MultiKeyRoomMaze(Maze):
         super().__init__(
             width=self.width, 
             length=self.height,
-            key_location=correct_key_location,
+            key_locations=[correct_key_location],
             door_location=[1, 1], 
             exit_location=[1, 1],
             robot_location=[1, 1],

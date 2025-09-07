@@ -14,7 +14,7 @@ from robotspeak.compiler import compiler
 class CorridorMaze(Maze):
     """Custom maze class for creating actual corridors with walls"""
     
-    def __init__(self, corridor_map, key_location, door_location, exit_location, robot_location, robot_direction='north'):
+    def __init__(self, corridor_map, key_locations, door_location, exit_location, robot_location, robot_direction='north'):
         """
         Create a corridor from a 2D map where:
         * = wall, . = floor, K = key, D = door, E = exit, R = robot
@@ -26,7 +26,7 @@ class CorridorMaze(Maze):
         super().__init__(
             width=self.width, 
             length=self.height,
-            key_location=key_location,
+            key_locations=key_locations,
             door_location=door_location, 
             exit_location=exit_location,
             robot_location=robot_location,
@@ -35,7 +35,7 @@ class CorridorMaze(Maze):
     
     def create_initial_map(self):
         """Create the corridor map from the provided pattern"""
-        self.validate_intial_inputs()
+        self.validate_initial_inputs()
         
         # Create map from the corridor pattern (objects already placed in the map)
         self.map_matrix = []
@@ -71,7 +71,7 @@ def create_test_corridors():
     ]
     test1 = CorridorMaze(
         corridor_map=corridor1_map,
-        key_location=[2, 3],      # Key in vertical section
+        key_locations=[[2, 3]],      # Key in vertical section
         door_location=[7, 6],     # Door at bottom right end
         exit_location=[2, 6],     # Exit in bottom horizontal section
         robot_location=[2, 2],    # Robot at top of vertical section
@@ -96,7 +96,7 @@ def create_test_corridors():
     ]
     test2 = CorridorMaze(
         corridor_map=corridor2_map,
-        key_location=[3, 7],      # Key in middle horizontal section (updated position)
+        key_locations=[[3, 7]],      # Key in middle horizontal section (updated position)
         door_location=[9, 2],     # Door at top right corridor
         exit_location=[2, 10],    # Exit at bottom left corridor  
         robot_location=[2, 2],    # Robot in top horizontal section
@@ -119,7 +119,7 @@ def create_test_corridors():
     ]
     test3 = CorridorMaze(
         corridor_map=corridor3_map,
-        key_location=[2, 4],      # Key in middle horizontal section
+        key_locations=[[2, 4]],      # Key in middle horizontal section
         door_location=[8, 4],     # Door at right side  
         exit_location=[2, 8],     # Exit at bottom
         robot_location=[2, 2],    # Robot at top left corridor

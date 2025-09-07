@@ -14,7 +14,7 @@ from robotspeak.compiler import compiler
 class RectangularRoomMaze(Maze):
     """Custom maze class for creating rectangular rooms with no obstacles"""
     
-    def __init__(self, room_map, key_location, door_location, exit_location, robot_location, robot_direction='north'):
+    def __init__(self, room_map, key_locations, door_location, exit_location, robot_location, robot_direction='north'):
         """
         Create a rectangular room from a 2D map where:
         * = wall, . = floor, K = key, D = door, E = exit, R = robot
@@ -26,7 +26,7 @@ class RectangularRoomMaze(Maze):
         super().__init__(
             width=self.width, 
             length=self.height,
-            key_location=key_location,
+            key_locations=key_locations,
             door_location=door_location, 
             exit_location=exit_location,
             robot_location=robot_location,
@@ -60,7 +60,7 @@ class RectangularRoomMaze(Maze):
         if derived_robot is not None:
             self.robot_location = derived_robot
         if derived_key is not None:
-            self.key_location = derived_key
+            self.key_locations = [derived_key]
         if derived_door is not None:
             self.door_location = derived_door
         if derived_exit is not None:
@@ -90,7 +90,7 @@ def create_test_rooms():
     ]
     test1 = RectangularRoomMaze(
         room_map=room1_map,
-        key_location=[2, 2],      # Key in room  
+        key_locations=[[2, 2]],    # Key in room  
         door_location=[4, 3],     # Door in room
         exit_location=[4, 2],     # Exit in room
         robot_location=[2, 3],    # Robot at lower-left 
@@ -111,7 +111,7 @@ def create_test_rooms():
     ]
     test2 = RectangularRoomMaze(
         room_map=room2_map,
-        key_location=[4, 4],      # Key in middle area
+        key_locations=[[4, 4]],    # Key in middle area
         door_location=[6, 5],     # Door on right side  
         exit_location=[6, 2],     # Exit at top right
         robot_location=[2, 6],    # Robot at lower-left
@@ -133,7 +133,7 @@ def create_test_rooms():
     ]
     test3 = RectangularRoomMaze(
         room_map=room3_map,
-        key_location=[4, 5],      # Key in lower area
+        key_locations=[[4, 5]],   # Key in lower area
         door_location=[8, 6],     # Door at bottom right
         exit_location=[8, 2],     # Exit at top right
         robot_location=[2, 7],    # Robot at lower-left
