@@ -1,8 +1,8 @@
-@ Program 3: Multi-Key Exploration with Unknown Start and Orientation
-@ World: Orthogonal rectangular room with 4 surrounding walls, no obstacles
-@ Objects: Multiple KEYS (only one opens the DOOR), one DOOR, one EXIT hatch
-@ Start: Robot starts at an unknown tile and facing an unknown direction
-@ Goal: Escape via EXIT hatch immediately if found, or find the correct KEY and open the DOOR
+@ Program 3: Multi-Key Snake Exploration with Key Testing
+@ Robot starts at unknown position facing unknown direction
+@ Goal: Find correct KEY + open DOOR OR find EXIT (whichever comes first)
+@ Environment: Orthogonal rectangular room, multiple keys (only one works)
+@ Strategy: Snake pattern + systematic key testing at door location
 
 LOAD 3
 
@@ -10,67 +10,89 @@ LOAD 3
 haskey := FALSE
 goingright := TRUE
 
-@ Phase 1: Move to a corner from unknown position and orientation
-@ Step A: Advance straight until we hit a wall
-WHILE FRONT_IS_CLEAR
-    MOVE_FORWARD
-END
-@ Step B: Turn left and go to the adjacent wall — now at a corner
+@ Program: Find the bottom-left corner
 TURN_LEFT
+
+@ Move West until we hit the left wall.
 WHILE FRONT_IS_CLEAR
     MOVE_FORWARD
 END
 
-@ Phase 2: Systematic sweep (boustrophedon snake) from the corner
-@ This works from any corner and orientation
+@ Now we are at the left wall, facing West.
+@ Turn left again to face South.
+TURN_LEFT
+
+@ Move South until we hit the bottom wall.
+WHILE FRONT_IS_CLEAR
+    MOVE_FORWARD
+END
+
+@ Turn right twice to face North
+TURN_RIGHT
+TURN_RIGHT
+
+@ Main exploration loop - Snake pattern sweep
 WHILE TRUE
-    @ Priority 1: Escape if at EXIT
-    IF AT_EXIT
+    @ Priority 1: Check for immediate escape via exit hatch
+    @IF AT_EXIT
+    @    OPEN_DOOR
+    @END
+    
+    @ Priority 2: Check if at door with key
+    IF AT_DOOR AND haskey  
         OPEN_DOOR
-    END
 
-    @ Priority 2: Open DOOR if we have a key (only the correct one opens it)
-    IF AT_DOOR AND haskey
-        OPEN_DOOR
+        THROW_AWAY_KEY
+        haskey := FALSE
     END
-
-    @ Priority 3: Pick up any key we find
+    
+    @ Priority 3: Pick up key if on it
     IF ON_KEY
-        PICK_KEY
-        haskey := TRUE
+        IF AT_DOOR OR haskey
+            @we should do nothing
+        OTHERWISE
+            PICK_KEY
+            haskey := TRUE
+        END
     END
-
-    @ Movement: Continue forward if possible; otherwise perform snake turn
+    
+    @ Snake movement pattern
     IF FRONT_IS_CLEAR
+        @ Continue in current direction
         MOVE_FORWARD
     OTHERWISE
+        @ Hit a wall - time to change direction (snake turn)
         IF goingright
-            @ Try to step one row/column inward, then reverse direction
-            TURN_RIGHT
-            IF FRONT_IS_CLEAR
-                MOVE_FORWARD
-                TURN_RIGHT
-                goingright := FALSE
-            OTHERWISE
-                @ No more space to go inward — likely reached final lane
-                TURN_RIGHT
-                TURN_RIGHT
-            END
-        OTHERWISE
+            @ Currently going right, turn to go up
             TURN_LEFT
             IF FRONT_IS_CLEAR
                 MOVE_FORWARD
+                @ Turn left again to go left (opposite direction)
                 TURN_LEFT
+                goingright := FALSE
+            OTHERWISE
+                @ No room to go up, we're at the top - turn around
+                TURN_LEFT
+                TURN_LEFT
+                goingright := FALSE
+            END
+        OTHERWISE
+            @ Currently going left, turn to go up  
+            TURN_RIGHT
+            IF FRONT_IS_CLEAR
+                MOVE_FORWARD
+                @ Turn right again to go right (opposite direction)
+                TURN_RIGHT
                 goingright := TRUE
             OTHERWISE
-                TURN_LEFT
-                TURN_LEFT
+                @ No room to go up, we're at the top - turn around
+                TURN_RIGHT
+                TURN_RIGHT
+                goingright := TRUE
             END
         END
     END
 END
 
-@ End of Program 3
+@ The program will end.
 END
-
-

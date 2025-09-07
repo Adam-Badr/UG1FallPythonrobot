@@ -34,10 +34,10 @@ TURN_RIGHT
 @ Main exploration loop - Snake pattern sweep
 WHILE TRUE
     @ Priority 1: Check for immediate escape via exit hatch
-    IF AT_EXIT
+    @IF AT_EXIT
         @ Exit hatch found
-        OPEN_DOOR
-    END
+     @   OPEN_DOOR
+    @END
     
     @ Priority 2: Check if at door with key
     IF AT_DOOR AND haskey  
@@ -57,35 +57,36 @@ WHILE TRUE
     OTHERWISE
         @ Hit a wall - time to change direction (snake turn)
         IF goingright
-            @ Currently going right, turn to go down
-            TURN_RIGHT
-            IF FRONT_IS_CLEAR
-                MOVE_FORWARD
-                @ Turn right again to go left (opposite direction)
-                TURN_RIGHT
-                goingright := FALSE
-            OTHERWISE
-                @ No room to go down, must be at bottom
-                TURN_RIGHT
-                TURN_RIGHT
-            END
-        OTHERWISE
-            @ Currently going left, turn to go down  
+            @ Currently going right, turn to go up
             TURN_LEFT
             IF FRONT_IS_CLEAR
                 MOVE_FORWARD
-                @ Turn left again to go right (opposite direction)
+                @ Turn left again to go left (opposite direction)
                 TURN_LEFT
+                goingright := FALSE
+            OTHERWISE
+                @ No room to go up, we're at the top - turn around
+                TURN_LEFT
+                TURN_LEFT
+                goingright := FALSE
+            END
+        OTHERWISE
+            @ Currently going left, turn to go up  
+            TURN_RIGHT
+            IF FRONT_IS_CLEAR
+                MOVE_FORWARD
+                @ Turn right again to go right (opposite direction)
+                TURN_RIGHT
                 goingright := TRUE
             OTHERWISE
-                @ No room to go down, must be at bottom
-                TURN_LEFT
-                TURN_LEFT
+                @ No room to go up, we're at the top - turn around
+                TURN_RIGHT
+                TURN_RIGHT
+                goingright := TRUE
             END
         END
     END
 END
-
 
 @ The program will end.
 END

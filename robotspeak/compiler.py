@@ -62,7 +62,7 @@ def load_program2():
     maze = Maze(width = 6, 
                 length = 5, 
                 key_locations = [[4, 4]],
-                door_location = [1, 3], 
+                door_location = [3, 3], 
                 exit_location = [6, 5], 
                 robot_location = [2, 4])
     try:
@@ -77,13 +77,13 @@ def load_program2():
 def load_program3():
     global maze
     print("--- Loading Program 3: Orthogonal Corridor with multiple keys ---")
-    maze = Maze(width = 6, 
-                length = 5, 
-                key_locations = [[2, 4], [5, 2]],
+    maze = Maze(width = 9, 
+                length = 7, 
+                key_locations = [[5, 4], [7, 2]],
                 true_key_idx = 2,
                 door_location = [6, 5], 
-                exit_location = [4, 1], 
-                robot_location = [1, 1])
+                exit_location = [8, 7], 
+                robot_location = [2, 3])
     try:
         maze.create_initial_map()
 
