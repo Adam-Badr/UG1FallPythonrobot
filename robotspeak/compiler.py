@@ -1,4 +1,5 @@
 from robotspeak.maze import Maze, MazeActionError, MazeValidationError
+import random
 
 # collection of variables
 global lineNumber
@@ -59,12 +60,41 @@ def load_program1():
 def load_program2():
     global maze
     print("--- Loading Program 2: Orthogonal Corridor ---")
-    maze = Maze(width = 6, 
-                length = 5, 
-                key_locations = [[4, 4]],
-                door_location = [3, 3], 
-                exit_location = [6, 5], 
-                robot_location = [2, 4])
+    randomWidth = random.randint(2, 10)
+    randomHeight = random.randint(2, 10)
+    coordinateList = []
+    #generate door location
+    doorx = random.randint(1, randomWidth)
+    doory = random.randint(1, randomHeight)
+    coordinateList.append((doorx, doory))
+    #generate exit location
+    exitx = random.randint(1, randomWidth)
+    exity = random.randint(1, randomHeight)
+    while (exitx, exity) in coordinateList: #to avoid thinga being placed on top of each other
+        exitx = random.randint(1, randomWidth)
+        exity = random.randint(1, randomHeight)
+    coordinateList.append((exitx, exity))
+    #generate robot location
+    robotx = random.randint(1, randomWidth)
+    roboty = random.randint(1, randomHeight)
+    while (robotx, roboty) in coordinateList:
+        robotx = random.randint(1, randomWidth)
+        roboty = random.randint(1, randomHeight)
+    coordinateList.append((robotx, roboty))
+    #key location
+    keyx = random.randint(1, randomWidth)
+    keyy = random.randint(1, randomHeight)
+    while (keyx, keyy) in coordinateList:
+        keyx = random.randint(1, randomWidth)
+        keyy = random.randint(1, randomHeight)
+    coordinateList.append((keyx, keyy))
+
+    maze = Maze(width = randomWidth, 
+                length = randomHeight, 
+                key_locations = [[keyx, keyy]],
+                door_location = [doorx, doory], 
+                exit_location = [exitx, exity], 
+                robot_location = [robotx, roboty])
     try:
         maze.create_initial_map()
 
@@ -77,13 +107,55 @@ def load_program2():
 def load_program3():
     global maze
     print("--- Loading Program 3: Orthogonal Corridor with multiple keys ---")
-    maze = Maze(width = 9, 
-                length = 7, 
-                key_locations = [[5, 4], [7, 2]],
-                true_key_idx = 2,
-                door_location = [6, 5], 
-                exit_location = [8, 7], 
-                robot_location = [2, 3])
+    randomWidth = random.randint(2, 10)
+    randomHeight = random.randint(2, 10)
+    coordinateList = []
+    #generate door location
+    doorx = random.randint(1, randomWidth)
+    doory = random.randint(1, randomHeight)
+    coordinateList.append((doorx, doory))
+    #generate exit location
+    exitx = random.randint(1, randomWidth)
+    exity = random.randint(1, randomHeight)
+    while (exitx, exity) in coordinateList: #to avoid thinga being placed on top of each other
+        exitx = random.randint(1, randomWidth)
+        exity = random.randint(1, randomHeight)
+    coordinateList.append((exitx, exity))
+    #generate robot location
+    robotx = random.randint(1, randomWidth)
+    roboty = random.randint(1, randomHeight)
+    while (robotx, roboty) in coordinateList:
+        robotx = random.randint(1, randomWidth)
+        roboty = random.randint(1, randomHeight)
+    coordinateList.append((robotx, roboty))
+    #generate key locations
+    freespace = randomWidth * randomHeight - len(coordinateList) 
+    if freespace <= 0:
+        nOfKeys = 1  
+    else:
+        
+        min_keys = 2 if freespace >= 2 else 1
+        nOfKeys = random.randint(min_keys, freespace)
+
+    keyArray = []
+    for _ in range(nOfKeys):
+        keyX = random.randint(1, randomWidth)
+        keyY = random.randint(1, randomHeight)
+        while (keyX, keyY) in coordinateList:
+            keyX = random.randint(1, randomWidth)
+            keyY = random.randint(1, randomHeight)
+        coordinateList.append((keyX, keyY))
+        keyArray.append([keyX, keyY])
+    #choose a real key
+    realKey = random.randint(1, len(keyArray))
+
+    maze = Maze(width = randomWidth, 
+                length = randomHeight, 
+                key_locations = keyArray,
+                true_key_idx = realKey,
+                door_location = [doorx, doory], 
+                exit_location = [exitx, exity], 
+                robot_location = [robotx, roboty])
     try:
         maze.create_initial_map()
 
