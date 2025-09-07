@@ -56,7 +56,7 @@ def load_program1():
 
     print("Initial Maze State:")
     maze.print_map()
-
+#function to load the second scenario
 def load_program2():
     global maze
     print("--- Loading Program 2: Orthogonal Corridor ---")
@@ -103,7 +103,7 @@ def load_program2():
         
     print("Initial Maze State:")
     maze.print_map()
-
+#function to load the third scenario
 def load_program3():
     global maze
     print("--- Loading Program 3: Orthogonal Corridor with multiple keys ---")
@@ -176,7 +176,7 @@ def tokeniser(line, lineNumber):
             raise SyntaxErrorException("Why are you slacking on separating := with spaces?????", lineNumber)
         if token in VOCABULARY:
             continue
-        if is_ascii_letters(token):
+        if is_ascii_letters(token): #variable name must follow the spec
             continue
         raise SyntaxErrorException("You are using invalid tokens", lineNumber)
 
@@ -247,7 +247,7 @@ def parser(tokens, lineNumber, numLines, codingList, num_executed_lines = 2):
             except MazeActionError as e:
                 print(f"Warning at line {lineNumber}: {e}")
         case "IF":
-            cond_tokens = tokens[1:]
+            cond_tokens = tokens[1:] #boolean expression
 
             else_line = None
             end_line = lineNumber + 1
@@ -325,7 +325,7 @@ def parser(tokens, lineNumber, numLines, codingList, num_executed_lines = 2):
             else:
                 raise SyntaxErrorException("Missing END for WHILE", lineNumber)
 
-            while eval_bool_expr(cond_tokens, lineNumber):
+            while eval_bool_expr(cond_tokens, lineNumber): #exact same as if but replace if with while
                 j = lineNumber + 1
                 while j < end_line:
                     raw = codingList[j - 1]

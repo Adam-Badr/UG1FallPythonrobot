@@ -11,10 +11,12 @@ Robotspeak is a programming language for controlling the actions and movements o
 
 ## Keywords and Tokens
 
-- **Actions:** `MOVE_FORWARD`, `TURN_LEFT`, `TURN_RIGHT`, `PICK_KEY`, `OPEN_DOOR`
+- **Actions:** `MOVE_FORWARD`, `TURN_LEFT`, `TURN_RIGHT`, `PICK_KEY`, `OPEN_DOOR`, `THROW_AWAY_KEY`
 - **Control and Operators:** `LOAD`, `IF`, `OTHERWISE`, `WHILE`, `END`, `AND`, `OR`
 - **Literals:** `TRUE`, `FALSE`
 - **Sensors:** `FRONT_IS_CLEAR`, `ON_KEY`, `AT_DOOR`, `AT_EXIT`
+- **vocabulary count:** 20
+
 
 ## Grammar (EBNF)
 
@@ -54,11 +56,12 @@ Programs **MUST** begin with a `LOAD` statement specifying the environment (1, 2
 
 ### Actions
 
-- **`MOVE_FORWARD`:** Advances the runner by one tile in the current facing direction if `FRONT_IS_CLEAR` is true, otherwise no effect
+- **`MOVE_FORWARD`:** Advances the runner by one tile in the current facing direction if `FRONT_IS_CLEAR` is true, otherwise raises MazeActionError
 - **`TURN_LEFT`:** Rotates the Runner's facing direction 90° counterclockwise; always succeeds
 - **`TURN_RIGHT`:** Rotates the Runner's facing direction 90° clockwise; always succeeds
-- **`PICK_KEY`:** Picks up a key if `ON_KEY` is true, otherwise no effect
-- **`OPEN_DOOR`:** Outputs "You escaped!" to the terminal and terminates the program if `AT_DOOR` is true and a correct key has been previously picked up, or `AT_EXIT` is true, otherwise no effect. If the program reaches the final `END` without `OPEN_DOOR` ever successfully executing, the program silently terminates
+- **`PICK_KEY`:** Picks up a key if `ON_KEY` is true, otherwise raises MazeActionError
+- **`THROW_AWAY_KEY`:** Discards the key currently held by the runner at the runner's location. If no key is held, a MazeActionError is raised
+- **`OPEN_DOOR`:** Outputs "MAZE SOLVED!" to the terminal and terminates the program if `AT_DOOR` is true and a correct key has been previously picked up, or `AT_EXIT` is true, otherwise raises MazeActionError. If the program reaches the final `END` without `OPEN_DOOR` ever successfully executing, the program silently terminates
 
 ### Sensors
 
@@ -92,3 +95,38 @@ A runtime error produces a diagnostic message of the form:
 ```
 YOOOOOOOO!!!!! What are you doing at line <n> with this RuntimeError!!!?!?!?! <description>
 ```
+
+### MazeActionErrors
+
+Detected when the runner attempts to perform an invalid action within the maze environment. Examples: moving forward into a wall, picking up a key when none is present.
+
+A MazeActionError produces a diagnostic message of the form:
+```
+Warning at line <n>: <description>
+```
+
+## Example program
+```robotspeak
+LOAD 1
+WHILE FRONT_IS_CLEAR
+    MOVE_FORWARD
+END
+OPEN_DOOR
+END
+
+### Token counts (line by line)
+- `LOAD 1` → [LOAD, 1] (2 tokens)  
+- `WHILE FRONT_IS_CLEAR` → [WHILE, FRONT_IS_CLEAR] (2 tokens)  
+- `MOVE_FORWARD` → [MOVE_FORWARD] (1 token)  
+- `END` → [END] (1 token)  
+- `OPEN_DOOR` → [OPEN_DOOR] (1 token)  
+- `END` → [END] (1 token)  
+
+### Explanation
+This program demonstrates how a runner can escape directly through the exit:
+
+1. The program begins with `LOAD 1`, which initializes environment 1.  
+2. The `WHILE` loop executes as long as the sensor `FRONT_IS_CLEAR` is true. Inside the loop, the runner executes `MOVE_FORWARD`, advancing one tile at a time.  
+3. Once the runner can no longer move forward (blocked by a wall), the loop ends.  
+4. `OPEN_DOOR` is then executed. If the runner happens to be standing on the exit tile at this point, the maze terminates successfully with the message **“MAZE SOLVED!”**.  
+5. The program terminates with the last `END`. If the runner is not at the exit, the program simply ends silently.
