@@ -2,6 +2,8 @@
 
 **Project for Group Assignment at AI1030 - Python Programming, MBZUAI**
 
+**You can find our [reflection](files/reflection.md) about designing the language and [walkthrough video](https://youtu.be/XfELJU1mRMg)**.
+
 This repository contains the source code for a custom programming language, **robotspeak**, and its interpreter, designed to solve the "Vault Runner" challenge. The project involves navigating a robot through a 2D maze to find a key, open a door, or reach a direct exit.
 
 The goal of this assignment was to design and implement a simple, constrained programming language from scratch. The language, robotspeak, provides a small set of commands and sensors for a robot to interact with its environment.
